@@ -10,6 +10,11 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-community/picker';
 
+const androidEmulatorServerUrl = 'http://10.0.2.2';
+const iosEmulatorServerUrl = 'http://localhost';
+const port = 5000;
+const serverUrl = Platform.OS === 'android' ? `${androidEmulatorServerUrl}:${port}` : `${iosEmulatorServerUrl}:${port}`
+
 const App: () => React$Node = props => {
   const {
     incomingText
@@ -18,19 +23,31 @@ const App: () => React$Node = props => {
   const [text, setText] = useState("");
   const [currentTag, setCurrentTag] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
-  const [tags, setTags] = useState([
-    { key: "dummy", label: "Select" },
-    { key: "open_source", label: "Open Source" },
-    { key: "programming", label: "Programming" }, 
-    { key: "management", label: "Management" },
-    { key: "web", label: "Web Development" },
-    { key: "dotnet", label: ".NET" },
-  ]);
+  const [tags, setTags] = useState([]);
 
   useEffect(() => {
     if (incomingText !== '')
       setText(incomingText);
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      let response = await getTags();
+      let result = await response.json();
+      setTags(["", ...result]);
+    };
+
+    fetchData();
+  }, []);
+
+  const getTags = async () => {
+    const url = `${serverUrl}/api/links/tags`;
+    let response = await fetch(url, {
+      method: 'GET',
+    });
+
+    return response;
+  }
 
   const addTag = tag => {
     if (!selectedTags.includes(tag))
@@ -40,7 +57,7 @@ const App: () => React$Node = props => {
   const pickerItems = () => {
     return tags.map((tag, index) => {
       return (
-        <Picker.Item key={index} label={tag.label} value={tag.key} />
+        <Picker.Item key={index} label={tag} value={tag} />
       );
     });
   };
@@ -53,16 +70,18 @@ const App: () => React$Node = props => {
         <Picker
           selectedValue={currentTag}
           onValueChange={(itemValue, itemIndex) => {
-            let tag = tags.find(t => t.key === itemValue);
-            setCurrentTag(tag.label);
-            addTag(tag);
+            if (itemValue && itemValue.trim()) {
+              setCurrentTag(itemValue);
+              addTag(itemValue);
+            }
           }}>
           {pickerItems()}
         </Picker>
         <FlatList
+          style={{ backgroundColor: 'yellow' }}
           data={selectedTags}
-          keyExtractor={item => item.key}
-          renderItem={({item}) => <Text style={styles.item}>{item.label}</Text>}
+          keyExtractor={(item, index) => item + index.toString()}
+          renderItem={({ item }) => <Text style={styles.item}>{item}</Text>}
         />
       </SafeAreaView>
     </>
@@ -80,6 +99,7 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 18,
     height: 44,
+    backgroundColor: 'green'
   },
 });
 
