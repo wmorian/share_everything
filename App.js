@@ -6,7 +6,8 @@ import {
   View,
   Text,
   StatusBar,
-  FlatList
+  FlatList,
+  Button
 } from 'react-native';
 import { Picker } from '@react-native-community/picker';
 
@@ -54,6 +55,21 @@ const App: () => React$Node = props => {
       setSelectedTags([...selectedTags, tag]);
   };
 
+  const submitLink = async () => {
+    const url = `${serverUrl}/api/links`;
+    let response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        url: text,
+        tags: selectedTags
+      })
+    });
+  }
+
   const pickerItems = () => {
     return tags.map((tag, index) => {
       return (
@@ -83,6 +99,8 @@ const App: () => React$Node = props => {
           keyExtractor={(item, index) => item + index.toString()}
           renderItem={({ item }) => <Text style={styles.item}>{item}</Text>}
         />
+        <Button title="Submit" style={styles.submit} onPress={submitLink}/>
+        {/* <Button onPress={async () => await submitLink()}>Submit</Button> */}
       </SafeAreaView>
     </>
   );
@@ -101,6 +119,8 @@ const styles = StyleSheet.create({
     height: 44,
     backgroundColor: 'green'
   },
+  submit: {
+  }
 });
 
 export default App;
